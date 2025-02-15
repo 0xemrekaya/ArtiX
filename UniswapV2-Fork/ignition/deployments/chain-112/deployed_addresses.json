@@ -1,0 +1,5 @@
+{
+  "UniswapV2Deployment#UniswapV2Factory": "0x7d9E55ec6DE63bc764dE629508e0B1a3b120B60E",
+  "UniswapV2Deployment#WETH9": "0xF4BFFAD12837369Cb0928815aCfC9a768C8c0eD8",
+  "UniswapV2Deployment#UniswapV2Router02": "0xAFAB7513EB80460ABA36d60824d30C61c2E11361"
+}

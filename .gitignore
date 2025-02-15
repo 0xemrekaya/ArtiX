@@ -1,0 +1,17 @@
+
+
+# VSCode
+.vscode/
+
+# dotenv environment variables file
+.env
+
+
+# Hardhat specific
+UniswapV2-Fork/artifacts
+UniswapV2-Fork/cache
+UniswapV2-Fork/node_modules
+
+
+# Backend specific 
+Backend/node_modules
