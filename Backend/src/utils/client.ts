@@ -1,13 +1,16 @@
-import { createPublicClient, http, createWalletClient } from 'viem';
-import { hardhat } from 'viem/chains';
-import { config } from '../config';
+import { createPublicClient, createWalletClient, http } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { ABCTestnet, config } from '../config';
 
 export const publicClient = createPublicClient({
-  chain: hardhat,
-  transport: http(config.rpcUrl)
+    chain: ABCTestnet,
+    transport: http(config.rpcUrl)
 });
 
+const account = privateKeyToAccount(config.privateKey);
+
 export const walletClient = createWalletClient({
-  chain: hardhat,
-  transport: http(config.rpcUrl)
+    account,
+    chain: ABCTestnet,
+    transport: http(config.rpcUrl)
 });
