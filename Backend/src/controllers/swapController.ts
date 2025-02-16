@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { publicClient, walletClient } from '../utils/client';
+import { publicClient } from '../utils/client';
 import { parseUnits, encodeFunctionData } from 'viem';
 import { config, FactoryABI, RouterABI, WETHABI } from '../config';
 import { SwapType } from '../middleware/swapMiddleware';

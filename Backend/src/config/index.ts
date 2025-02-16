@@ -11,7 +11,7 @@ export const config = {
     rpcUrl: process.env.RPC_URL || 'http://localhost:8545',
     factoryAddress: process.env.FACTORY_ADDRESS as `0x${string}`,
     routerAddress: process.env.ROUTER_ADDRESS as `0x${string}`,
-    WETH: process.env.WETH as `0x${string}`,
+    WETH: process.env.WETH_ADDRESS as `0x${string}`,
     privateKey: process.env.PRIVATE_KEY as `0x${string}`,
     port: process.env.PORT || 3000,
     corsOrigin: process.env.CORS_ORIGIN || '*'
