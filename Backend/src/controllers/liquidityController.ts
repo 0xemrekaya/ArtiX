@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { publicClient } from '../utils/client';
 import { parseUnits, encodeFunctionData } from 'viem';
 import { config, RouterABI } from '../config';
-import { LiquidityType } from '../middleware/liquidityMiddleware';
 
 export const addLiquidity = async (req: Request, res: Response) => {
     try {
@@ -19,7 +17,7 @@ export const addLiquidity = async (req: Request, res: Response) => {
         } = req.body;
 
         let txData;
-        let value = 0n;
+        let value = "0";
 
         if (liquidityType === 'ADD_ETH') {
             const ethToken = tokenA.toLowerCase() === config.WETH.toLowerCase() ? tokenB : tokenA;
@@ -28,15 +26,15 @@ export const addLiquidity = async (req: Request, res: Response) => {
             const tokenAmountMin = tokenA.toLowerCase() === config.WETH.toLowerCase() ? amountBMin : amountAMin;
             const ethAmountMin = tokenA.toLowerCase() === config.WETH.toLowerCase() ? amountAMin : amountBMin;
 
-            value = parseUnits(ethAmount, 18);
+            value = ethAmount;
             txData = encodeFunctionData({
                 abi: RouterABI,
                 functionName: 'addLiquidityETH',
                 args: [
                     ethToken,
-                    parseUnits(tokenAmount, 18),
-                    parseUnits(tokenAmountMin, 18),
-                    parseUnits(ethAmountMin, 18),
+                    BigInt(tokenAmount),
+                    BigInt(tokenAmountMin),
+                    BigInt(ethAmountMin),
                     to,
                     BigInt(deadline)
                 ]
@@ -61,7 +59,7 @@ export const addLiquidity = async (req: Request, res: Response) => {
         res.json({
             to: config.routerAddress,
             data: txData,
-            value
+            value: value
         });
     } catch (error) {
         if (error instanceof Error) {

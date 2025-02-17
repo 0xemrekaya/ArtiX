@@ -15,3 +15,7 @@ UniswapV2-Fork/node_modules
 
 # Backend specific 
 Backend/node_modules
+
+
+# Scripts specific
+Scripts/node_modules
