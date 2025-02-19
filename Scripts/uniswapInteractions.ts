@@ -1,10 +1,10 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { createPublicClient, createWalletClient, http, parseEther, encodeFunctionData, Account, parseGwei } from 'viem';
+import { createPublicClient, createWalletClient, http, parseEther, encodeFunctionData, Account, parseGwei, isAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { defineChain } from 'viem';
 import path from 'path';
-import { RouterABI } from '../Backend/src/config/index'
+import { PairABI, RouterABI } from '../Backend/src/config/index'
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -45,8 +45,8 @@ const walletClient = createWalletClient({
 
 // Token parameters
 const TOKEN_SUPPLY = parseEther('1000000'); // 1 million tokens
-const TOKEN_NAME = 'MyTestToken';
-const TOKEN_SYMBOL = 'MTT';
+const TOKEN_NAME = 'MyTestToken2';
+const TOKEN_SYMBOL = 'MTT2';
 
 // ERC20 contract ABI
 const ERC20_ABI = [
@@ -434,9 +434,9 @@ function calculateAmountWithSlippage(amount: bigint, slippagePercent: number): b
 
 async function addLiquidity(tokenAddress: string, wethAddress: string) {
     try {
-        const tokenAmount = parseEther('100'); // 1000 tokens
+        const tokenAmount = parseEther('100'); // 100 tokens
         const ethAmount = parseEther('0.5'); // 0.5 ETH
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
+        const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
 
         // %10 slippage
         const amountAMin = calculateAmountWithSlippage(tokenAmount, 10);
@@ -454,67 +454,16 @@ async function addLiquidity(tokenAddress: string, wethAddress: string) {
             liquidityType: 'ADD_ETH'
         });
 
+        console.log('deadline:', deadline.toString());
+
         const { to, data, value } = response.data;
-        console.log('To:', to);
-        console.log('value:', value);
-        console.log('Txdata:', data);
-
-        const routerAddress = '0xAFAB7513EB80460ABA36d60824d30C61c2E11361' as `0x${string}`;
-
-        try {
-            console.log('Simulating transaction with parameters:');
-            console.log('Token Address:', tokenAddress);
-            console.log('Token Amount:', tokenAmount.toString());
-            console.log('Min Token Amount:', amountAMin.toString());
-            console.log('Min ETH Amount:', amountBMin.toString());
-            console.log('Deadline:', deadline.toString());
-            console.log('Value:', value);
-
-            const simulateResult = await publicClient.simulateContract({
-                address: to as `0x${string}`,
-                abi: RouterABI,
-                functionName: 'addLiquidityETH',
-                args: [
-                    tokenAddress,
-                    tokenAmount,
-                    amountAMin,
-                    amountBMin,
-                    account.address,
-                    deadline
-                ],
-                value: BigInt(value),
-                account: account.address
-            });
-
-            console.log('Simulation successful:', simulateResult);
-        } catch (error: any) {
-            console.error('\nSimulation Error Details:');
-            console.error('Error Message:', error.message);
-
-            if (error && typeof error === 'object') {
-                if ('cause' in error) {
-                    console.error('Error Cause:', error.cause);
-                }
-                if ('metaMessages' in error && Array.isArray(error.metaMessages)) {
-                    console.error('Meta Messages:', error.metaMessages);
-                }
-                // Contract error details
-                if ('data' in error) {
-                    console.error('Error Data:', error.data);
-                }
-            }
-
-            throw error;
-        }
+        const txData = data.startsWith('0x') ? data : '0x' + data;
 
         const hash = await walletClient.sendTransaction({
             to: to,
-            data: data,
+            data: txData,
             value: BigInt(value),
-            account: account,
-            maxFeePerGas: parseGwei('10'), // 10 gwei
-            maxPriorityFeePerGas: parseGwei('5'), // 5 gwei
-            gas: 500000n // sabit gas limiti
+            account: account
         });
 
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -531,7 +480,7 @@ async function addLiquidity(tokenAddress: string, wethAddress: string) {
 async function removeLiquidity(tokenAddress: string, pairAddress: string) {
     try {
         const liquidity = parseEther('5'); // Remove 5 LP tokens
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
+        const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
 
         const response = await axios.post(`${BACKEND_URL}/liquidity/remove`, {
             tokenA: tokenAddress,
@@ -562,27 +511,32 @@ async function removeLiquidity(tokenAddress: string, pairAddress: string) {
     }
 }
 
-async function swapTokensForETH(tokenAddress: string) {
+async function swapTokensForETH(tokenAddress: string, amountIn: string) {
     try {
-        const tokenAmount = parseEther('100'); // Swap 100 tokens
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
+        const tokenAmount = parseEther(amountIn); // swap amount
+        const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
+        const wethAddress = '0xcde412ba5370eDEb27F3C549f8E9949D296045CF' as `0x${string}`;
+        const tokenAmountMin = calculateAmountWithSlippage(tokenAmount, 50);
 
         const response = await axios.post(`${BACKEND_URL}/swap/swap`, {
             tokenIn: tokenAddress,
-            tokenOut: 'ETH',
+            tokenOut: wethAddress,
             amountIn: tokenAmount.toString(),
-            amountOutMin: '0',
+            amountOutMin: "0",
             to: account.address,
             deadline: deadline.toString(),
-            path: [tokenAddress, 'ETH']
+            path: [tokenAddress, wethAddress]
         });
 
+        console.log('tokenAmount:', tokenAmount.toString());
+        console.log('tokenAmountMin:', tokenAmountMin.toString());
+
         const { to, data, value } = response.data;
+
 
         const hash = await walletClient.sendTransaction({
             to,
             data,
-            value,
             account
         });
 
@@ -595,27 +549,31 @@ async function swapTokensForETH(tokenAddress: string) {
     }
 }
 
-async function swapETHForTokens(tokenAddress: string) {
+async function swapETHForTokens(tokenAddress: string, amountIn: string) {
     try {
-        const ethAmount = parseEther('1'); // Swap 1 ETH
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour from now
+        const ethAmount = parseEther(amountIn); // Swap amount
+        const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
+        const wethAddress = '0xcde412ba5370eDEb27F3C549f8E9949D296045CF' as `0x${string}`;
 
         const response = await axios.post(`${BACKEND_URL}/swap/swap`, {
-            tokenIn: 'ETH',
+            tokenIn: wethAddress,
             tokenOut: tokenAddress,
             amountIn: ethAmount.toString(),
-            amountOutMin: '0',
+            amountOutMin: "0",
             to: account.address,
             deadline: deadline.toString(),
-            path: ['ETH', tokenAddress]
+            path: [wethAddress, tokenAddress]
         });
 
         const { to, data, value } = response.data;
 
+        console.log('ethAmount:', ethAmount.toString());
+        console.log('value:', value);
+
         const hash = await walletClient.sendTransaction({
             to,
             data,
-            value,
+            value: BigInt(value),
             account
         });
 
@@ -627,6 +585,23 @@ async function swapETHForTokens(tokenAddress: string) {
         throw error;
     }
 }
+
+async function getPairReserve(tokenA: `0x${string}`, tokenB: `0x${string}`) {
+    const response = await axios.post(`${BACKEND_URL}/pool/reserves-for-tokens`, {
+        tokenA: tokenA,
+        tokenB: tokenB
+    });
+    console.log('reserves:', response.data);
+    return response.data;
+}
+
+
+async function getAllPoolsInfo() {
+    const response = await axios.get(`${BACKEND_URL}/pool/all`);
+    console.log('reserves:', response.data);
+    return response.data;
+}
+
 
 async function approveToken(tokenAddress: `0x${string}`, spender: `0x${string}`, amount: bigint) {
     try {
@@ -648,24 +623,28 @@ async function approveToken(tokenAddress: `0x${string}`, spender: `0x${string}`,
 
 async function main() {
     try {
-        const tokenAddress = '0x521EcF954A3F2acA4E608322e620f069B5Ff9d1A' as `0x${string}`;
-        const wethAddress = '0xF4BFFAD12837369Cb0928815aCfC9a768C8c0eD8' as `0x${string}`;
-        const routerAddress = '0xAFAB7513EB80460ABA36d60824d30C61c2E11361' as `0x${string}`;
 
-        const testToken = '0xBC4E821cF2D685b92B7d84f6A510614c33924e1D' as `0x${string}`;
+        const wethAddress = '0xcde412ba5370eDEb27F3C549f8E9949D296045CF' as `0x${string}`;
+        const routerAddress = '0x6A52e0C6b623190D565f0060c8711AA7127ABB3C' as `0x${string}`;
+
+        const testToken = '0x11a6615b52b5d95d5c01a65fab6070c3cc23dd22' as `0x${string}`;
+        const testToken2 = '0xb793fc98d3e47ce2146747ad7af130fae5ec9cc0' as `0x${string}`;
 
         // Approve token for router (max amount) //! Already approved
-        // const maxAmount = parseEther("1000000");
-        // await approveToken(tokenAddress, routerAddress, maxAmount);
+        //const maxAmount = parseEther("1000000");
+        //await approveToken(testToken2, routerAddress, maxAmount);
 
         // 3. Add initial liquidity
-        await addLiquidity(tokenAddress, wethAddress);
+        // await addLiquidity(testToken2, wethAddress);
 
-        // // 4. Perform swaps
-        // await swapTokensForETH(tokenAddress);
+        // 4. Perform swaps
+        //await swapETHForTokens(testToken2, "0.5");
         // await swapETHForTokens(tokenAddress);
 
-        // // 5. Remove some liquidity
+        //await getPairReserve(testToken2, wethAddress);
+        await getAllPoolsInfo();
+
+        // 5. Remove some liquidity
         // await removeLiquidity(tokenAddress, pairAddress);
 
         console.log('All operations completed successfully!');

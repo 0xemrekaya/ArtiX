@@ -40,3 +40,59 @@ export const FactoryABI = UniswapV2Factory.abi;
 export const RouterABI = UniswapV2Router02.abi;
 
 export const WETHABI = WETH9.abi;
+
+// Added minimal PairABI for UniswapV2Pair contract to support getReserves
+export const PairABI = [
+    {
+        constant: true,
+        inputs: [],
+        name: 'getReserves',
+        outputs: [
+            { internalType: 'uint112', name: '_reserve0', type: 'uint112' },
+            { internalType: 'uint112', name: '_reserve1', type: 'uint112' },
+            { internalType: 'uint32', name: '_blockTimestampLast', type: 'uint32' }
+        ],
+        payable: false,
+        stateMutability: 'view',
+        type: 'function'
+    },
+    {
+        constant: true,
+        inputs: [],
+        name: 'token0',
+        outputs: [ { internalType: 'address', name: '', type: 'address' } ],
+        payable: false,
+        stateMutability: 'view',
+        type: 'function'
+    },
+    {
+        constant: true,
+        inputs: [],
+        name: 'token1',
+        outputs: [ { internalType: 'address', name: '', type: 'address' } ],
+        payable: false,
+        stateMutability: 'view',
+        type: 'function'
+    }
+];
+
+export const TokenABI = [
+    {
+        constant: true,
+        inputs: [],
+        name: 'name',
+        outputs: [ { internalType: 'string', name: '', type: 'string' } ],
+        payable: false,
+        stateMutability: 'view',
+        type: 'function'
+    },
+    {
+        constant: true,
+        inputs: [],
+        name: 'symbol',
+        outputs: [ { internalType: 'string', name: '', type: 'string' } ],
+        payable: false,
+        stateMutability: 'view',
+        type: 'function'
+    }
+];

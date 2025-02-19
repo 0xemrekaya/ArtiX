@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { publicClient } from '../utils/client';
-import { parseUnits, encodeFunctionData } from 'viem';
+import { encodeFunctionData } from 'viem';
 import { config, FactoryABI, RouterABI, WETHABI } from '../config';
 import { SwapType } from '../middleware/swapMiddleware';
 
@@ -12,7 +12,7 @@ export const getAmountsOut = async (req: Request, res: Response) => {
             address: config.routerAddress,
             abi: RouterABI,
             functionName: 'getAmountsOut',
-            args: [parseUnits(amountIn, 18), path]
+            args: [BigInt(amountIn), path]
         });
 
         res.json({ amounts });
@@ -48,10 +48,10 @@ export const getPair = async (req: Request, res: Response) => {
 
 export const executeSwap = async (req: Request, res: Response) => {
     try {
-        const { amountIn, amountOutMin, path, deadline, swapType } = req.body;
+        const { amountIn, amountOutMin, path, to, deadline, swapType } = req.body;
 
         let txData;
-        const value = swapType === 'ETH_TO_TOKEN' ? parseUnits(amountIn, 18) : 0n;
+        const value = swapType === 'ETH_TO_TOKEN' ? BigInt(amountIn) : 0n;
 
         switch (swapType as SwapType) {
             case 'ETH_TO_TOKEN':
@@ -59,9 +59,9 @@ export const executeSwap = async (req: Request, res: Response) => {
                     abi: RouterABI,
                     functionName: 'swapExactETHForTokens',
                     args: [
-                        parseUnits(amountOutMin, 18),
+                        BigInt(amountOutMin),
                         path,
-                        req.body.to,
+                        to,
                         BigInt(deadline)
                     ]
                 });
@@ -72,10 +72,10 @@ export const executeSwap = async (req: Request, res: Response) => {
                     abi: RouterABI,
                     functionName: 'swapExactTokensForETH',
                     args: [
-                        parseUnits(amountIn, 18),
-                        parseUnits(amountOutMin, 18),
+                        BigInt(amountIn),
+                        BigInt(amountOutMin),
                         path,
-                        req.body.to,
+                        to,
                         BigInt(deadline)
                     ]
                 });
@@ -86,10 +86,10 @@ export const executeSwap = async (req: Request, res: Response) => {
                     abi: RouterABI,
                     functionName: 'swapExactTokensForTokens',
                     args: [
-                        parseUnits(amountIn, 18),
-                        parseUnits(amountOutMin, 18),
+                        BigInt(amountIn),
+                        BigInt(amountOutMin),
                         path,
-                        req.body.to,
+                        to,
                         BigInt(deadline)
                     ]
                 });
@@ -102,7 +102,7 @@ export const executeSwap = async (req: Request, res: Response) => {
         res.json({
             to: config.routerAddress,
             data: txData,
-            value: value
+            value: value.toString()
         });
     } catch (error) {
         if (error instanceof Error) {

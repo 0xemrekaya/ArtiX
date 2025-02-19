@@ -46,10 +46,10 @@ export const addLiquidity = async (req: Request, res: Response) => {
                 args: [
                     tokenA,
                     tokenB,
-                    parseUnits(amountADesired, 18),
-                    parseUnits(amountBDesired, 18),
-                    parseUnits(amountAMin, 18),
-                    parseUnits(amountBMin, 18),
+                    BigInt(amountADesired),
+                    BigInt(amountBDesired),
+                    BigInt(amountAMin),
+                    BigInt(amountBMin),
                     to,
                     BigInt(deadline)
                 ]
@@ -95,9 +95,9 @@ export const removeLiquidity = async (req: Request, res: Response) => {
                 functionName: 'removeLiquidityETH',
                 args: [
                     token,
-                    parseUnits(liquidity, 18),
-                    parseUnits(tokenAmountMin, 18),
-                    parseUnits(ethAmountMin, 18),
+                    BigInt(liquidity),
+                    BigInt(tokenAmountMin),
+                    BigInt(ethAmountMin),
                     to,
                     BigInt(deadline)
                 ]
@@ -109,9 +109,9 @@ export const removeLiquidity = async (req: Request, res: Response) => {
                 args: [
                     tokenA,
                     tokenB,
-                    parseUnits(liquidity, 18),
-                    parseUnits(amountAMin, 18),
-                    parseUnits(amountBMin, 18),
+                    BigInt(liquidity),
+                    BigInt(amountAMin),
+                    BigInt(amountBMin),
                     to,
                     BigInt(deadline)
                 ]
@@ -121,7 +121,7 @@ export const removeLiquidity = async (req: Request, res: Response) => {
         res.json({
             to: config.routerAddress,
             data: txData,
-            value: 0n
+            value: "0"
         });
     } catch (error) {
         if (error instanceof Error) {

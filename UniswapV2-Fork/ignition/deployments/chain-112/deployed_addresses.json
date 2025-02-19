@@ -1,5 +1,5 @@
 {
-  "UniswapV2Deployment#UniswapV2Factory": "0x7d9E55ec6DE63bc764dE629508e0B1a3b120B60E",
-  "UniswapV2Deployment#WETH9": "0xF4BFFAD12837369Cb0928815aCfC9a768C8c0eD8",
-  "UniswapV2Deployment#UniswapV2Router02": "0xAFAB7513EB80460ABA36d60824d30C61c2E11361"
+  "UniswapV2Deployment#UniswapV2Factory": "0xF94Fb69402Beb5B84D9D00a0B7af155F2e6f2ac8",
+  "UniswapV2Deployment#WETH9": "0xcde412ba5370eDEb27F3C549f8E9949D296045CF",
+  "UniswapV2Deployment#UniswapV2Router02": "0x6A52e0C6b623190D565f0060c8711AA7127ABB3C"
 }
