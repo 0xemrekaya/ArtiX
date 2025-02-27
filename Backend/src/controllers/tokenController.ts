@@ -6,37 +6,35 @@ import { config, PairABI, TokenABI, FactoryABI } from '../config';
 /**
  * Get token balance for a specific address
  * 
- * @param req Request object containing tokenAddress and optional ownerAddress
+ * @param req Request object containing tokenAddress and ownerAddress
  * @param res Response object to return the balance information
  */
 export const getTokenBalance = async (req: Request, res: Response) => {
     try {
         const { tokenAddress } = req.params;
-        // Fix: Better handling of address from either params or query
-        const ownerAddress = req.params.ownerAddress || req.query.address as string;
-        
-        // Fix: Proper validation of addresses
-        if (!isAddress(tokenAddress)) {
-            return res.status(400).json({ error: 'Invalid token address provided' });
+        const ownerAddress = req.query.address as string;  // Always get from query params
+
+        // Validate token address
+        if (!tokenAddress || !isAddress(tokenAddress)) {
+            return res.status(400).json({ 
+                error: 'Invalid token address',
+                details: 'Please provide a valid ERC20 token address'
+            });
         }
-        
+
+        // Validate owner address
         if (!ownerAddress || !isAddress(ownerAddress)) {
-            return res.status(400).json({ error: 'Invalid owner address provided' });
+            return res.status(400).json({ 
+                error: 'Invalid owner address',
+                details: 'Please provide a valid wallet address in the query parameter "address"'
+            });
         }
 
         const formattedTokenAddress = tokenAddress as `0x${string}`;
         const formattedOwnerAddress = ownerAddress as `0x${string}`;
-        
+
         try {
-            // Get token balance
-            const balance = await publicClient.readContract({
-                address: formattedTokenAddress,
-                abi: TokenABI,
-                functionName: 'balanceOf',
-                args: [formattedOwnerAddress]
-            }) as bigint;
-            
-            // Get token details
+            // Get token details first to validate it's a token contract
             const [name, symbol, decimals] = await Promise.all([
                 publicClient.readContract({
                     address: formattedTokenAddress,
@@ -57,33 +55,48 @@ export const getTokenBalance = async (req: Request, res: Response) => {
                     args: []
                 })
             ]) as [string, string, number];
-            
+
+            // Get token balance
+            const balance = await publicClient.readContract({
+                address: formattedTokenAddress,
+                abi: TokenABI,
+                functionName: 'balanceOf',
+                args: [formattedOwnerAddress]
+            }) as bigint;
+
             // Format balance according to decimals
             const formattedBalance = formatUnits(balance, decimals);
-            
+
             res.json({
-                tokenAddress: formattedTokenAddress,
-                ownerAddress: formattedOwnerAddress,
-                rawBalance: balance.toString(),
-                formattedBalance,
-                tokenDetails: {
-                    name,
-                    symbol,
-                    decimals
+                success: true,
+                data: {
+                    token: {
+                        address: formattedTokenAddress,
+                        name,
+                        symbol,
+                        decimals
+                    },
+                    balance: {
+                        owner: formattedOwnerAddress,
+                        raw: balance.toString(),
+                        formatted: formattedBalance,
+                        decimals
+                    }
                 }
             });
         } catch (contractError) {
-            // Fix: Better error handling for contract issues
-            return res.status(400).json({ 
-                error: 'Error reading token data. Make sure the address is a valid token contract.'
+            return res.status(400).json({
+                error: 'Invalid token contract',
+                details: 'The provided address is not a valid ERC20 token contract',
+                technicalError: contractError instanceof Error ? contractError.message : 'Unknown contract error'
             });
         }
     } catch (error) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'Unknown error occurred' });
-        }
+        console.error('Token balance error:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            details: error instanceof Error ? error.message : 'Unknown error occurred'
+        });
     }
 };
 

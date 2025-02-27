@@ -19,3 +19,7 @@ Backend/node_modules
 
 # Scripts specific
 Scripts/node_modules
+
+
+# Agent
+Agent/venv
